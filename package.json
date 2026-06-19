@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "deploy": "pnpm build && printf '/*\\t/index.html\\t200\\n' > dist/_redirects && wrangler pages deploy dist --project-name=tabula-peutingeriana --branch=main --commit-dirty=true"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
@@ -40,6 +41,7 @@
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",
     "vite-plugin-pwa": "^1.3.0",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.9",
+    "wrangler": "^4.100.0"
   }
 }

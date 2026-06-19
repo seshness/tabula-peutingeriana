@@ -12,7 +12,7 @@ Spotify lacks a native "resume mid-catalog" feature — this fills the gap.
 2. Create a new app
 3. Set **Redirect URIs** to:
    - `http://127.0.0.1:5173/` (development)
-   - Your production URL (if deploying)
+   - `https://tabula-peutingeriana.pages.dev/` (production)
 4. Copy your **Client ID**
 
 ### 2. Configure environment
