@@ -28,7 +28,10 @@ function MainApp({ token, onLogout }: { token: string; onLogout: () => void }) {
 
   return (
     <div className="flex flex-col min-h-svh bg-background">
-      <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-sm border-b border-border/40">
+      <header
+        className="sticky top-0 z-10 flex items-center justify-between px-4 pb-3 bg-background/80 backdrop-blur-sm border-b border-border/40"
+        style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+      >
         <div className="flex items-center gap-2">
           <span className="text-base">🗺</span>
           <span className="text-sm font-semibold text-foreground truncate max-w-40">
