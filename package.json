@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "deploy": "pnpm build && printf '/*\\t/index.html\\t200\\n' > dist/_redirects && wrangler pages deploy dist --project-name=tabula-peutingeriana --branch=main --commit-dirty=true"
+    "deploy": "pnpm build && wrangler pages deploy dist --project-name=tabula-peutingeriana --branch=main --commit-dirty=true"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
