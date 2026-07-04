@@ -25,7 +25,8 @@ export interface SpotifyShow {
 }
 
 interface EpisodesPage {
-  items: SpotifyEpisode[]
+  // Spotify returns null items for episodes unavailable in the user's market.
+  items: Array<SpotifyEpisode | null>
   total: number
   limit: number
   offset: number
@@ -70,7 +71,11 @@ export async function fetchAllEpisodes(
     ),
   )
 
-  const all = [...first.items, ...pages.flatMap(p => p.items)]
+  // Spotify includes null entries for episodes unavailable in the user's
+  // market (or removed), so drop them before anything downstream touches them.
+  const all = [...first.items, ...pages.flatMap(p => p.items)].filter(
+    (ep): ep is SpotifyEpisode => ep != null,
+  )
 
   // Spotify returns newest-first; sort oldest-first for the streak algorithm
   return all.sort((a, b) => new Date(a.release_date).getTime() - new Date(b.release_date).getTime())
