@@ -70,10 +70,31 @@ export async function fetchAllEpisodes(
     ),
   )
 
-  const all = [...first.items, ...pages.flatMap(p => p.items)]
+  return sortEpisodes([...first.items, ...pages.flatMap(p => p.items)])
+}
 
-  // Spotify returns newest-first; sort oldest-first for the streak algorithm
-  return all.sort((a, b) => new Date(a.release_date).getTime() - new Date(b.release_date).getTime())
+/** Matches the "N. " prefix on numbered episode titles */
+export const EPISODE_NUMBER_RE = /^\s*(\d+)\.\s*/
+
+/** The "N." prefix from the title; null for unnumbered bonus / Empire Club episodes */
+export function episodeNumber(title: string): number | null {
+  const m = title.match(EPISODE_NUMBER_RE)
+  return m ? Number(m[1]) : null
+}
+
+/**
+ * Oldest → newest for the streak algorithm. Release dates are only day-precise
+ * and sometimes out of step with the numbering (e.g. 404–406 dated before 403),
+ * so numbered episodes are reordered by number within the slots they occupy.
+ * Unnumbered episodes keep their date position.
+ */
+export function sortEpisodes(episodes: SpotifyEpisode[]): SpotifyEpisode[] {
+  const byDate = episodes
+    .map(episode => ({ episode, number: episodeNumber(episode.name), time: new Date(episode.release_date).getTime() }))
+    .sort((a, b) => a.time - b.time)
+  const numbered = byDate.filter(d => d.number !== null).sort((a, b) => a.number! - b.number!)
+  let next = 0
+  return byDate.map(d => (d.number === null ? d.episode : numbered[next++].episode))
 }
 
 export async function fetchShow(showId: string, token: string): Promise<SpotifyShow> {
@@ -109,9 +130,9 @@ export function formatDuration(ms: number): string {
   return `${m}m`
 }
 
-export function formatDate(dateStr: string): string {
+export function formatDate(dateStr: string, { day = true } = {}): string {
   return new Date(dateStr).toLocaleDateString('en-GB', {
-    day: 'numeric',
+    day: day ? 'numeric' : undefined,
     month: 'short',
     year: 'numeric',
   })

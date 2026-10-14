@@ -51,18 +51,12 @@ function isEffectivelyPlayed(
  * chain (its immediate predecessor is also played), which prevents an isolated
  * bonus listen far ahead in the feed from hijacking the streak position.
  */
-export function findNextEpisode(episodes: SpotifyEpisode[]): NextEpisodeResult | null {
+export function findNextEpisode(
+  episodes: SpotifyEpisode[],
+  played: boolean[] = getPlayedFlags(episodes),
+): NextEpisodeResult | null {
   const n = episodes.length
   if (n === 0) return null
-
-  const played = new Array<boolean>(n).fill(false)
-
-  // Right-to-left so later episodes inform the 90%+chain rule for earlier ones
-  for (let i = n - 1; i >= 0; i--) {
-    const allSubsequentPlayed = i === n - 1 || played.slice(i + 1).every(Boolean)
-    const nextEpisode = i < n - 1 ? episodes[i + 1] : null
-    played[i] = isEffectivelyPlayed(episodes[i], nextEpisode, allSubsequentPlayed)
-  }
 
   // Scan newest → oldest. Accept a played episode as an anchor only if its
   // immediate predecessor is also played (chain check). This skips isolated
@@ -91,14 +85,18 @@ export function findNextEpisode(episodes: SpotifyEpisode[]): NextEpisodeResult |
   return null // All episodes played
 }
 
-export function getPlayedCount(episodes: SpotifyEpisode[]): number {
+/**
+ * episodes must be sorted oldest → newest. Returns a played flag per episode,
+ * computed right-to-left so later episodes inform the 90%+chain rule for earlier ones.
+ */
+export function getPlayedFlags(episodes: SpotifyEpisode[]): boolean[] {
   const n = episodes.length
-  if (n === 0) return 0
   const played = new Array<boolean>(n).fill(false)
+  let allSubsequentPlayed = true
   for (let i = n - 1; i >= 0; i--) {
-    const allSubsequentPlayed = i === n - 1 || played.slice(i + 1).every(Boolean)
     const nextEpisode = i < n - 1 ? episodes[i + 1] : null
     played[i] = isEffectivelyPlayed(episodes[i], nextEpisode, allSubsequentPlayed)
+    allSubsequentPlayed &&= played[i]
   }
-  return played.filter(Boolean).length
+  return played
 }

@@ -1,18 +1,36 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { clearCache, readCache, writeCache } from '@/lib/cache'
 import { EMPIRE_SHOW_ID, fetchAllEpisodes, fetchShow, type SpotifyEpisode, type SpotifyShow } from '@/lib/spotify'
-import { findNextEpisode, getPlayedCount, type NextEpisodeResult } from '@/lib/streak'
+import { findNextEpisode, getPlayedFlags, type NextEpisodeResult } from '@/lib/streak'
 
 interface EpisodeState {
   status: 'idle' | 'loading' | 'success' | 'error'
   episodes: SpotifyEpisode[]
   show: SpotifyShow | null
   next: NextEpisodeResult | null
+  /** Played flag per episode, parallel to episodes */
+  played: boolean[]
   playedCount: number
   loadedCount: number
   totalCount: number
   error: string | null
   fromCache: boolean
+}
+
+function loadedState(episodes: SpotifyEpisode[], show: SpotifyShow, fromCache: boolean): EpisodeState {
+  const played = getPlayedFlags(episodes)
+  return {
+    status: 'success',
+    episodes,
+    show,
+    next: findNextEpisode(episodes, played),
+    played,
+    playedCount: played.filter(Boolean).length,
+    loadedCount: episodes.length,
+    totalCount: episodes.length,
+    error: null,
+    fromCache,
+  }
 }
 
 export function useEpisodes(token: string | null) {
@@ -21,6 +39,7 @@ export function useEpisodes(token: string | null) {
     episodes: [],
     show: null,
     next: null,
+    played: [],
     playedCount: 0,
     loadedCount: 0,
     totalCount: 0,
@@ -40,18 +59,7 @@ export function useEpisodes(token: string | null) {
       if (!forceRefresh) {
         const cached = readCache(EMPIRE_SHOW_ID)
         if (cached) {
-          const next = findNextEpisode(cached.episodes)
-          setState({
-            status: 'success',
-            episodes: cached.episodes,
-            show: cached.show,
-            next,
-            playedCount: getPlayedCount(cached.episodes),
-            loadedCount: cached.episodes.length,
-            totalCount: cached.episodes.length,
-            error: null,
-            fromCache: true,
-          })
+          setState(loadedState(cached.episodes, cached.show, true))
           return
         }
       }
@@ -67,19 +75,7 @@ export function useEpisodes(token: string | null) {
         ])
 
         writeCache(EMPIRE_SHOW_ID, show, episodes)
-        const next = findNextEpisode(episodes)
-
-        setState({
-          status: 'success',
-          episodes,
-          show,
-          next,
-          playedCount: getPlayedCount(episodes),
-          loadedCount: episodes.length,
-          totalCount: episodes.length,
-          error: null,
-          fromCache: false,
-        })
+        setState(loadedState(episodes, show, false))
       } catch (err) {
         if ((err as Error).name === 'AbortError') return
         setState(s => ({

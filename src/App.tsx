@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useEpisodes } from '@/hooks/useEpisodes'
 
 function MainApp({ token, onLogout }: { token: string; onLogout: () => void }) {
-  const { status, episodes, show, next, playedCount, loadedCount, totalCount, error, fromCache, refresh } =
+  const { status, episodes, show, next, played, playedCount, loadedCount, totalCount, error, fromCache, refresh } =
     useEpisodes(token)
 
   if (status === 'loading' || status === 'idle') {
@@ -66,7 +66,12 @@ function MainApp({ token, onLogout }: { token: string; onLogout: () => void }) {
         <AllCaughtUp totalEpisodes={episodes.length} />
       )}
 
-      <EpisodeList episodes={episodes} nextEpisodeId={next?.episode.id ?? null} />
+      <EpisodeList
+        episodes={episodes}
+        played={played}
+        playedCount={playedCount}
+        nextEpisodeId={next?.episode.id ?? null}
+      />
 
       <footer className="px-4 py-6 text-center">
         <p className="text-[10px] text-muted-foreground/50 leading-relaxed max-w-xs mx-auto">

@@ -36,11 +36,6 @@ html, body, #root {
   color-scheme: dark;
 }
 
-/* iOS momentum scrolling */
-.scroll-momentum {
-  -webkit-overflow-scrolling: touch;
-}
-
 /* Prevent text selection on episode list */
 .no-select {
   -webkit-user-select: none;
