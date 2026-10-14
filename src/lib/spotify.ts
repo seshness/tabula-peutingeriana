@@ -70,6 +70,7 @@ function pageOffsets(from: number, to: number): number[] {
  * Requests every page in parallel, sized by estimateEpisodeCount() rather than
  * waiting for the first page to report the total. Overshooting costs an empty
  * page; undershooting costs one extra parallel round for the missing pages.
+ * Returns episodes in Spotify's order; callers sort with sortEpisodes().
  */
 export async function fetchAllEpisodes(
   showId: string,
@@ -94,7 +95,7 @@ export async function fetchAllEpisodes(
   const pages = await fetchPages(pageOffsets(0, fetchedUpTo))
   if (total > fetchedUpTo) pages.push(...(await fetchPages(pageOffsets(fetchedUpTo, total))))
 
-  return sortEpisodes(pages.flatMap(p => p.items))
+  return pages.flatMap(p => p.items)
 }
 
 /** Matches the "N. " prefix on numbered episode titles */
