@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { estimateEpisodeCount, fetchAllEpisodes, type SpotifyEpisode } from './spotify'
+import { dropMissingEpisodes, estimateEpisodeCount, fetchAllEpisodes, sortEpisodes, type SpotifyEpisode } from './spotify'
 
 const DAY = 24 * 60 * 60 * 1000
 
@@ -18,15 +18,19 @@ describe('fetchAllEpisodes', () => {
     vi.useRealTimers()
   })
 
-  function stubFeed(total: number) {
+  function stubFeed(total: number, nullAt: number[] = []) {
     const requested: number[] = []
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
         const offset = Number(new URL(url).searchParams.get('offset'))
         requested.push(offset)
-        const items: SpotifyEpisode[] = []
+        const items: Array<SpotifyEpisode | null> = []
         for (let i = offset; i < Math.min(offset + 50, total); i++) {
+          if (nullAt.includes(i)) {
+            items.push(null)
+            continue
+          }
           items.push({
             id: `e${i}`,
             name: `${i + 1}. Episode`,
@@ -58,5 +62,20 @@ describe('fetchAllEpisodes', () => {
     expect(episodes).toHaveLength(520)
     expect(episodes[0].id).toBe('e0')
     expect(requested.slice(-2).sort((a, b) => a - b)).toEqual([450, 500])
+  })
+
+  it('drops null items Spotify returns for unavailable episodes', async () => {
+    vi.useFakeTimers({ now: Date.UTC(2026, 9, 11), toFake: ['Date'] })
+    stubFeed(416, [3, 200])
+    const episodes = await fetchAllEpisodes('show', 'token', () => {})
+    expect(episodes).toHaveLength(414)
+    expect(() => sortEpisodes(episodes)).not.toThrow()
+  })
+})
+
+describe('dropMissingEpisodes', () => {
+  it('removes null/undefined entries, e.g. from caches written before the fix', () => {
+    const ep = { id: 'a', name: '1. A', release_date: '2020-01-01' } as SpotifyEpisode
+    expect(dropMissingEpisodes([null, ep, undefined, ep])).toEqual([ep, ep])
   })
 })

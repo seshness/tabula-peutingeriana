@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { clearCache, readCache, writeCache } from '@/lib/cache'
-import { EMPIRE_SHOW_ID, fetchAllEpisodes, fetchShow, sortEpisodes, type SpotifyEpisode, type SpotifyShow } from '@/lib/spotify'
+import { dropMissingEpisodes, EMPIRE_SHOW_ID, fetchAllEpisodes, fetchShow, sortEpisodes, type SpotifyEpisode, type SpotifyShow } from '@/lib/spotify'
 import { findNextEpisode, getPlayedFlags, type NextEpisodeResult } from '@/lib/streak'
 
 interface EpisodeState {
@@ -17,10 +17,10 @@ interface EpisodeState {
   fromCache: boolean
 }
 
-function loadedState(unsorted: SpotifyEpisode[], show: SpotifyShow, fromCache: boolean): EpisodeState {
-  // Sorted here, the one place episodes enter the app, so caches written by
-  // older versions with a different order can't break the streak or arcs
-  const episodes = sortEpisodes(unsorted)
+function loadedState(raw: ReadonlyArray<SpotifyEpisode | null>, show: SpotifyShow, fromCache: boolean): EpisodeState {
+  // Cleaned and sorted here, the one place episodes enter the app, so caches written by
+  // older versions (different order, or null entries) can't break the streak or arcs
+  const episodes = sortEpisodes(dropMissingEpisodes(raw))
   const played = getPlayedFlags(episodes)
   return {
     status: 'success',

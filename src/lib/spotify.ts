@@ -25,7 +25,8 @@ export interface SpotifyShow {
 }
 
 interface EpisodesPage {
-  items: SpotifyEpisode[]
+  /** Spotify returns null for episodes it can't serve (e.g. unavailable in the user's market) */
+  items: Array<SpotifyEpisode | null>
   total: number
   limit: number
   offset: number
@@ -95,7 +96,15 @@ export async function fetchAllEpisodes(
   const pages = await fetchPages(pageOffsets(0, fetchedUpTo))
   if (total > fetchedUpTo) pages.push(...(await fetchPages(pageOffsets(fetchedUpTo, total))))
 
-  return pages.flatMap(p => p.items)
+  const items = pages.flatMap(p => p.items)
+  const episodes = dropMissingEpisodes(items)
+  if (episodes.length < items.length) console.warn(`Spotify returned ${items.length - episodes.length} null episode(s); skipped`)
+  return episodes
+}
+
+/** Removes the null entries Spotify sometimes returns in place of episodes */
+export function dropMissingEpisodes(items: ReadonlyArray<SpotifyEpisode | null | undefined>): SpotifyEpisode[] {
+  return items.filter((e): e is SpotifyEpisode => e != null)
 }
 
 /** Matches the "N. " prefix on numbered episode titles */
