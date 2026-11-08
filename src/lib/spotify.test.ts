@@ -5,10 +5,10 @@ const DAY = 24 * 60 * 60 * 1000
 
 describe('estimateEpisodeCount', () => {
   it('starts from the known count and grows ~2.25 a week', () => {
-    const known = Date.UTC(2026, 9, 11)
-    expect(estimateEpisodeCount(known)).toBe(416)
-    expect(estimateEpisodeCount(known + 28 * DAY)).toBe(425)
-    expect(estimateEpisodeCount(known - 365 * DAY)).toBe(416)
+    const known = Date.UTC(2026, 10, 8)
+    expect(estimateEpisodeCount(known)).toBe(500)
+    expect(estimateEpisodeCount(known + 28 * DAY)).toBe(509)
+    expect(estimateEpisodeCount(known - 365 * DAY)).toBe(500)
   })
 })
 
@@ -48,27 +48,27 @@ describe('fetchAllEpisodes', () => {
   }
 
   it('requests every estimated page in one parallel round', async () => {
-    vi.useFakeTimers({ now: Date.UTC(2026, 9, 11), toFake: ['Date'] })
-    const requested = stubFeed(416)
+    vi.useFakeTimers({ now: Date.UTC(2026, 10, 8), toFake: ['Date'] })
+    const requested = stubFeed(500)
     const episodes = await fetchAllEpisodes('show', 'token', () => {})
-    expect(episodes).toHaveLength(416)
-    expect(requested.sort((a, b) => a - b)).toEqual([0, 50, 100, 150, 200, 250, 300, 350, 400])
+    expect(episodes).toHaveLength(500)
+    expect(requested.sort((a, b) => a - b)).toEqual([0, 50, 100, 150, 200, 250, 300, 350, 400, 450])
   })
 
   it('tops up with a second round when the show outgrew the estimate', async () => {
-    vi.useFakeTimers({ now: Date.UTC(2026, 9, 11), toFake: ['Date'] })
-    const requested = stubFeed(520)
+    vi.useFakeTimers({ now: Date.UTC(2026, 10, 8), toFake: ['Date'] })
+    const requested = stubFeed(600)
     const episodes = await fetchAllEpisodes('show', 'token', () => {})
-    expect(episodes).toHaveLength(520)
+    expect(episodes).toHaveLength(600)
     expect(episodes[0].id).toBe('e0')
-    expect(requested.slice(-2).sort((a, b) => a - b)).toEqual([450, 500])
+    expect(requested.slice(-2).sort((a, b) => a - b)).toEqual([500, 550])
   })
 
   it('drops null items Spotify returns for unavailable episodes', async () => {
-    vi.useFakeTimers({ now: Date.UTC(2026, 9, 11), toFake: ['Date'] })
-    stubFeed(416, [3, 200])
+    vi.useFakeTimers({ now: Date.UTC(2026, 10, 8), toFake: ['Date'] })
+    stubFeed(500, [3, 200])
     const episodes = await fetchAllEpisodes('show', 'token', () => {})
-    expect(episodes).toHaveLength(414)
+    expect(episodes).toHaveLength(498)
     expect(() => sortEpisodes(episodes)).not.toThrow()
   })
 })

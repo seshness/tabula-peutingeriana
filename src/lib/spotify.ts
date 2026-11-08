@@ -48,10 +48,11 @@ async function fetchEpisodesPage(showId: string, token: string, offset: number):
   return apiFetch<EpisodesPage>(url, token)
 }
 
-// Empire's feed had 416 episodes on 11 Oct 2026 and has averaged ~2.25 a week
-// over the preceding 3–12 months (2.0–2.3, bonus episodes included)
-const KNOWN_EPISODE_COUNT = 416
-const KNOWN_EPISODE_COUNT_AT = Date.UTC(2026, 9, 11)
+// Spotify reported 500 episodes in Empire's feed (market=from_token, nulls
+// included) on 8 Nov 2026; it has averaged ~2.25 a week, bonus episodes included.
+// The old 416 baseline (11 Oct) undershot by ~75, costing a second fetch round.
+const KNOWN_EPISODE_COUNT = 500
+const KNOWN_EPISODE_COUNT_AT = Date.UTC(2026, 10, 8)
 const EPISODES_PER_WEEK = 2.25
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000
 
